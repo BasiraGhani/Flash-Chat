@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flash_chat_starting_project/constants.dart';
 
 class ChatScreen extends StatefulWidget {
- static const String id ='chat_screen';
+  static const String id = 'chat_screen';
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -14,6 +14,21 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _fireStore = FirebaseFirestore.instance;
   TextEditingController _messageTextController = TextEditingController();
+
+  // void getMessages()async{
+  //  var messages= await _fireStore.collection('messages').get();
+  //  for(var message in messages.docs){
+  //     print(message.data());
+  //  }
+  // }
+
+  void messageStream() {
+    _fireStore.collection('messages').snapshots().listen((event) {
+      for (var message in event.docs) {
+        print(message.data());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +41,9 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {
-              Navigator.pop(context);
-              AuthService().signOut();
+                Navigator.pop(context);
+                AuthService().signOut();
+
               }),
         ],
         title: const Text('⚡ ️Chat'),
@@ -37,6 +53,37 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            StreamBuilder<QuerySnapshot>(
+              stream: _fireStore.collection('messages').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: Colors.lightBlue,
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasData) {
+                  var messages = snapshot.data!.docs;
+                  List<Text> messagesWidgets = [];
+                  for (var message in messages) {
+                    var messageText = message.get('text');
+                    var sender = message.get('sender');
+                    Text messageWidget = Text('$messageText from$sender');
+                    messagesWidgets.add(messageWidget);
+                  }
+                  return Column(
+                    children: messagesWidgets,
+                  );
+                } else {
+                  return Center(
+                    child: Text('snapshot has no data'),
+                  );
+                }
+              },
+            ),
             Container(
               decoration: kMessageContainerDecoration,
               child: Row(
@@ -44,17 +91,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: <Widget>[
                   Expanded(
                     child: TextField(
-                      controller:  _messageTextController,
+                      controller: _messageTextController,
                       decoration: kMessageTextFieldDecoration,
                     ),
                   ),
                   TextButton(
                     onPressed: () {
-                    _fireStore.collection('messages').add({
-                      'date': DateTime.now().microsecondsSinceEpoch,
-                      'text': _messageTextController.text,
-                      'sender': AuthService().getCurrenUser!.email,
-                    });
+                      _fireStore.collection('messages').add({
+                        'date': DateTime.now().microsecondsSinceEpoch,
+                        'text': _messageTextController.text,
+                        'sender': AuthService().getCurrenUser!.email,
+                      });
                     },
                     child: const Icon(Icons.send,
                         size: 30, color: kSendButtonColor),
