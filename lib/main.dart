@@ -25,22 +25,23 @@ class FlashChat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: AuthService().authStateChanges,
-      builder: (context, snapshot) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: kBackgroundColor,
-          ),
-          routes: {
-            WelcomeScreen.id: (context) => WelcomeScreen(),
-            LoginScreen.id:  (context) => LoginScreen(),
-            RegistrationScreen.id : (context) => RegistrationScreen(),
-            ChatScreen.id: (context) => ChatScreen(),
-          },
-          initialRoute: AuthService().getCurrenUser != null ? ChatScreen.id : WelcomeScreen.id,
-        );
-      }
-    );
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData.dark().copyWith(
+              scaffoldBackgroundColor: kBackgroundColor,
+            ),
+            routes: {
+              WelcomeScreen.id: (context) => WelcomeScreen(),
+              LoginScreen.id: (context) => LoginScreen(),
+              RegistrationScreen.id: (context) => RegistrationScreen(),
+              ChatScreen.id: (context) => ChatScreen(),
+            },
+            home: AuthService().getCurrenUser != null
+                ? ChatScreen()
+                : WelcomeScreen(),
+          );
+        });
   }
 }
